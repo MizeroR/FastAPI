@@ -1,64 +1,69 @@
+from dataclasses import dataclass
 from datetime import date
 from src.models.note import NoteCreate, NoteUpdate, NoteResponse
 
+@dataclass
+class Note:
+    """Internal Note data model"""
+    id: int
+    title: str
+    content: str
+    created_at: date
+
 class NoteStorage:
-    """Stores all notes in memory (simple dictionary)"""
+    """Stores all notes in memory using a list"""
     
     def __init__(self):
-        self.notes = {}
+        self.notes: list[Note] = []
         self.next_id = 1
     
     def create(self, note: NoteCreate):
         """Create and store a new note"""
-        note_id = self.next_id
+        new_note = Note(
+            id=self.next_id,
+            title=note.title,
+            content=note.content,
+            created_at=date.today()
+        )
+        self.notes.append(new_note)
         self.next_id += 1
-        
-        self.notes[note_id] = {
-            "id": note_id,
-            "title": note.title,
-            "content": note.content,
-            "created_at": date.today()
-        }
-        
-        return NoteResponse(**self.notes[note_id])
+        return NoteResponse(**vars(new_note))
     
     def get_all(self, skip=0, limit=10, title_filter=None):
         """Get all notes with optional filtering and pagination"""
-        all_notes = list(self.notes.values())
+        all_notes = self.notes
         
         if title_filter:
             all_notes = [
                 note for note in all_notes 
-                if title_filter.lower() in note["title"].lower()
+                if title_filter.lower() in note.title.lower()
             ]
         
         paginated_notes = all_notes[skip : skip + limit]
-        
-        return [NoteResponse(**note) for note in paginated_notes]
+        return [NoteResponse(**vars(note)) for note in paginated_notes]
     
     def get_by_id(self, note_id):
         """Get a single note by ID"""
-        if note_id in self.notes:
-            return NoteResponse(**self.notes[note_id])
+        for note in self.notes:
+            if note.id == note_id:
+                return NoteResponse(**vars(note))
         return None
     
     def update(self, note_id, note: NoteUpdate):
         """Update a note (only fields provided)"""
-        if note_id not in self.notes:
-            return None
-        
-        if note.title is not None:
-            self.notes[note_id]["title"] = note.title
-        if note.content is not None:
-            self.notes[note_id]["content"] = note.content
-        
-        return NoteResponse(**self.notes[note_id])
+        for existing_note in self.notes:
+            if existing_note.id == note_id:
+                if note.title is not None:
+                    existing_note.title = note.title
+                if note.content is not None:
+                    existing_note.content = note.content
+                return NoteResponse(**vars(existing_note))
+        return None
     
     def delete(self, note_id):
         """Delete a note by ID"""
-        if note_id in self.notes:
-            del self.notes[note_id]
-            return True
+        for i, note in enumerate(self.notes):
+            if note.id == note_id:
+                self.notes.pop(i)
+                return True
         return False
-
-storage = NoteStorage()

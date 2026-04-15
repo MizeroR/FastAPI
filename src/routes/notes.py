@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Query
 from typing import Optional
 from src.models.note import NoteCreate, NoteUpdate, NoteResponse
-from src.storage.memory import storage
+from src.main import storage
 
 router = APIRouter(prefix="/notes", tags=["notes"])
 

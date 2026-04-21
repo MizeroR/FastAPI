@@ -67,3 +67,7 @@ class NoteStorage:
                 self.notes.pop(i)
                 return True
         return False
+
+
+# Global instance for import
+storage = NoteStorage()

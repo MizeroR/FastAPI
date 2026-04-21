@@ -1,18 +1,17 @@
 import uvicorn
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
+from src.storage.memory import storage
 from src.routes.notes import router
-from src.storage.memory import NoteStorage
+from src.services.note_service import NoteService
 
-# Initialize storage
-storage = NoteStorage()
+# Services can be initialized here too
+note_service = NoteService(storage)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup: Storage is initialized
     print("Storage initialized")
     yield
-    # Shutdown: Cleanup if needed
     print("Shutting down")
 
 app = FastAPI(
